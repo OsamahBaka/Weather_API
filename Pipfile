@@ -9,6 +9,7 @@ python-decouple = "*"
 django-redis = "*"
 djangorestframework = "*"
 requests = "*"
+apscheduler = "*"
 
 [dev-packages]
 

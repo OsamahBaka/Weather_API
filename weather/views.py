@@ -1,11 +1,9 @@
 from rest_framework import views
 from rest_framework.response import Response
 from django_redis import get_redis_connection
-import json
-import requests
-from decouple import config
+from .utils import fetch_weather_data
 from statistics import mean
-
+import json
 
 class WeatherByCityView(views.APIView):
     def get(self, request, city):
@@ -30,13 +28,11 @@ class WeatherByCityView(views.APIView):
 
             weather_data = redis_conn.get(cache_key)
             if not weather_data:
-                url = f"https://api.weatherapi.com/v1/current.json?q={city}&key={config('API_KEY')}"
-                headers = {'accept': 'application/json'}
-                response = requests.get(url, headers=headers)
+                weather_data = fetch_weather_data(city)
+                if not weather_data:
+                    return Response({"error": "Failed to fetch weather data"}, status=500)
 
-                response.raise_for_status()
-
-                weather_data = json.dumps(response.json())
+                weather_data = json.dumps(weather_data)
                 redis_conn.set(cache_key, weather_data, ex=3600)
 
             weather_data = json.loads(weather_data)
@@ -46,12 +42,8 @@ class WeatherByCityView(views.APIView):
         except ValueError as ve:
             return Response({"error": str(ve)}, status=400)
 
-        except requests.RequestException as re:
-            return Response({"error": "Failed to fetch weather data"}, status=500)
-
         except Exception as e:
             return Response({"error": str(e)}, status=500)
-
 
 class WeatherBulkView(views.APIView):
     def post(self, request):
@@ -84,17 +76,14 @@ class WeatherBulkView(views.APIView):
 
                 weather_data = redis_conn.get(cache_key)
                 if not weather_data:
-                    url = f"https://api.weatherapi.com/v1/current.json?q={city}&key={config('API_KEY')}"
-                    headers = {'accept': 'application/json'}
-                    response = requests.get(url, headers=headers)
+                    weather_data = fetch_weather_data(city)
+                    if not weather_data:
+                        return Response({"error": "Failed to fetch weather data"}, status=500)
 
-                    response.raise_for_status()
-
-                    weather_data = json.dumps(response.json())
+                    weather_data = json.dumps(weather_data)
                     redis_conn.set(cache_key, weather_data, ex=3600)
 
                 weather_data = json.loads(weather_data)
-
                 weather_data_list.append(weather_data)
 
             return Response(weather_data_list)
@@ -102,12 +91,8 @@ class WeatherBulkView(views.APIView):
         except ValueError as ve:
             return Response({"error": str(ve)}, status=400)
 
-        except requests.RequestException as re:
-            return Response({"error": "Failed to fetch weather data"}, status=500)
-
         except Exception as e:
             return Response({"error": str(e)}, status=500)
-
 
 class WeatherStatisticsView(views.APIView):
     def get(self, request):
@@ -136,9 +121,7 @@ class WeatherStatisticsView(views.APIView):
 
             for cache_key in cache_keys:
                 weather_data = redis_conn.get(cache_key)
-
                 weather_data = json.loads(weather_data)
-
                 temp_celsius = weather_data['current']['temp_c']
                 city_name = weather_data['location']['name']
 
@@ -148,7 +131,6 @@ class WeatherStatisticsView(views.APIView):
             average_temp = mean(temperatures)
             max_temp = max(temperatures)
             min_temp = min(temperatures)
-
             total_cities = len(city_names)
 
             response_data = {
