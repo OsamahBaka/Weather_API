@@ -6,13 +6,6 @@ import json
 def schedule_api():
     """
     This function is responsible for scheduling the API calls to fetch weather data.
-
-    Args:
-        None
-
-    Returns:
-        None
-
     """
     redis_conn = get_redis_connection()
     all_keys = redis_conn.keys('weather:*')

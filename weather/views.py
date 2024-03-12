@@ -27,6 +27,9 @@ class WeatherByCityView(views.APIView):
             ValueError: If the city parameter is not provided.
             HTTPError: If the API request returns an error.
         """
+        if not city:
+            return Response({"error": "City parameter is required"}, status=400)
+        
         try:
             cache_key = f'weather:{city}'
 
@@ -36,7 +39,7 @@ class WeatherByCityView(views.APIView):
             if not weather_data:
                 weather_data = fetch_weather_data(city)
                 if not weather_data:
-                    return Response({"error": "Failed to fetch weather data"}, status=500)
+                    return Response({"error": "Failed to fetch weather data for the provided city"}, status=400)
 
                 weather_data = json.dumps(weather_data)
                 redis_conn.set(cache_key, weather_data, ex=3600)
@@ -45,11 +48,8 @@ class WeatherByCityView(views.APIView):
 
             return Response(weather_data)
 
-        except ValueError as ve:
-            return Response({"error": str(ve)}, status=400)
-
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            return Response({"error": "there is a system error, please try again later."}, status=500)
 
 
 class WeatherBulkView(views.APIView):
@@ -85,7 +85,7 @@ class WeatherBulkView(views.APIView):
                 if not weather_data:
                     weather_data = fetch_weather_data(city)
                     if not weather_data:
-                        return Response({"error": "Failed to fetch weather data"}, status=500)
+                        return Response({"error": "Failed to fetch weather data for the provided city"}, status=400)
 
                     weather_data = json.dumps(weather_data)
                     redis_conn.set(cache_key, weather_data, ex=3600)
@@ -99,7 +99,7 @@ class WeatherBulkView(views.APIView):
             return Response({"error": str(ve)}, status=400)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            return Response({"error": "there is a system error, please try again later."}, status=500)
 
 
 class WeatherStatisticsView(views.APIView):
@@ -152,4 +152,4 @@ class WeatherStatisticsView(views.APIView):
             return Response(response_data)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            return Response({"error": "there is a system error, please try again later."}, status=500)
