@@ -4,6 +4,12 @@ from django_redis import get_redis_connection
 from .utils import fetch_weather_data
 from statistics import mean
 import json
+from django.shortcuts import render
+
+
+def swagger(request):
+    return render(request, 'swagger.html')
+
 
 class WeatherByCityView(views.APIView):
     def get(self, request, city):
@@ -44,6 +50,7 @@ class WeatherByCityView(views.APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
 
 class WeatherBulkView(views.APIView):
     def post(self, request):
@@ -93,6 +100,7 @@ class WeatherBulkView(views.APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
 
 class WeatherStatisticsView(views.APIView):
     def get(self, request):
