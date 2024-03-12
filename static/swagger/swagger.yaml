@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: Weather API
+  version: 1.0.0
+  description: Your project description
+paths:
+  /weather/{city}/:
+    get:
+      operationId: weather_retrieve
+      description: Retrieve the current weather for a given city.
+      parameters:
+        - in: path
+          name: city
+          schema:
+            type: string
+          required: true
+          description: The name of the city for which to retrieve weather data.
+      tags:
+        - weather
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+      responses:
+        '200':
+          description: Current weather data for the specified city.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherData'
+        '400':
+          description: Bad request. The city parameter is not provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error. Failed to fetch weather data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /weather/bulk/:
+    post:
+      operationId: weather_bulk_create
+      description: Retrieve the current weather for a list of cities.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkWeatherRequest'
+      tags:
+        - weather
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+      responses:
+        '200':
+          description: Weather data for the specified cities.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WeatherData'
+        '400':
+          description: Bad request. The request body does not contain a list of cities.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error. Failed to fetch weather data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /weather/statistics/:
+    get:
+      operationId: weather_statistics_retrieve
+      description: Retrieve aggregated statistics for the weather data.
+      tags:
+        - weather
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+      responses:
+        '200':
+          description: Aggregated statistics for the weather data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherStatistics'
+        '404':
+          description: No weather data found in the cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    WeatherData:
+      type: object
+      properties:
+        location:
+          type: object
+          properties:
+            name:
+              type: string
+            region:
+              type: string
+            country:
+              type: string
+            lat:
+              type: number
+            lon:
+              type: number
+            tz_id:
+              type: string
+            localtime_epoch:
+              type: integer
+            localtime:
+              type: string
+        current:
+          type: object
+          properties:
+            last_updated_epoch:
+              type: integer
+            last_updated:
+              type: string
+            temp_c:
+              type: number
+            temp_f:
+              type: number
+            is_day:
+              type: integer
+            condition:
+              type: object
+              properties:
+                text:
+                  type: string
+                icon:
+                  type: string
+                code:
+                  type: integer
+            wind_mph:
+              type: number
+            wind_kph:
+              type: number
+            wind_degree:
+              type: integer
+            wind_dir:
+              type: string
+            pressure_mb:
+              type: number
+            pressure_in:
+              type: number
+            precip_mm:
+              type: number
+            precip_in:
+              type: number
+            humidity:
+              type: integer
+            cloud:
+              type: integer
+            feelslike_c:
+              type: number
+            feelslike_f:
+              type: number
+            vis_km:
+              type: number
+            vis_miles:
+              type: number
+            uv:
+              type: number
+            gust_mph:
+              type: number
+            gust_kph:
+              type: number
+
+    BulkWeatherRequest:
+      type: object
+      properties:
+        cities:
+          type: array
+          items:
+            type: string
+
+    WeatherStatistics:
+      type: object
+      properties:
+        total_cities:
+          type: integer
+        city_names:
+          type: array
+          items:
+            type: string
+        average_temperature:
+          type: number
+        highest_temperature:
+          type: number
+        lowest_temperature:
+          type: number
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
