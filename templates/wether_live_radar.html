@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <title>Get lat and long</title>
+  </head>
+  <body>
+    <div class="wrap">
+      <textarea id="weatherResults" cols="50" rows="10" readonly></textarea><br />
+      <div id="map" style="width: 100%; height:100vh"></div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+      const socket = new WebSocket('ws://localhost:8000/weather/live-radar/')
+      socket.onmessage = function (event) {
+        console.log('Received message from server:', event.data)
+        const weatherData = JSON.parse(event.data)
+        displayWeatherText(weatherData)
+      }
+      socket.onclose = function (event) {
+        console.log('WebSocket connection closed')
+      }
+      
+      let mapOptions = {
+        center: [24.686, 46.625],
+        zoom: 6
+      }
+      let map = new L.map('map', mapOptions)
+      let layer = new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+      map.addLayer(layer)
+      let marker = null;
+      map.on('click', (event) => {
+        const latitude = event.latlng.lat
+        const longitude = event.latlng.lng
+        const coordinates = `${latitude},${longitude}`
+        if (marker !== null) {
+          map.removeLayer(marker)
+        }
+      
+        marker = L.marker([latitude, longitude]).addTo(map)
+      
+        document.getElementById('latitude').value = latitude
+        document.getElementById('longitude').value = longitude
+      
+        socket.send(JSON.stringify({ coordinates: coordinates }))
+      })
+      
+      function displayWeatherText(weatherData) {
+        const resultsTextArea = document.getElementById('weatherResults')
+        resultsTextArea.value = ''
+        for (const key in weatherData) {
+          if (weatherData.hasOwnProperty(key)) {
+            const data = weatherData[key]
+            resultsTextArea.value += `Coordinates: ${key}\n`
+            resultsTextArea.value += `Name: ${data.Name}\n`
+            resultsTextArea.value += `Temperature: ${data.Temp} °C\n`
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
