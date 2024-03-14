@@ -73,4 +73,4 @@ The project likely interacts with external weather APIs or data sources to fetch
 
 - Ensure the Redis container (`my-redis`) is running to enable caching functionality for improved performance.
 - Customize the project settings and frontend as needed to fit your requirements.
-- For production deployment, consider configuring a more robust setup with load balancing, database replication, and security measures.
+- check .env.example to know which data needed to add.
