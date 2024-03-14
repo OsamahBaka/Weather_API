@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Weather</title>
+</head>
+<body>
+    <textarea name="weatherResults" id="weatherResults" cols="50" rows="10" readonly></textarea><br>
+    Enter city names (separated by commas): <input type="text" id="cityInput">
+    <button onclick="getWeather()">Get Weather</button>
+    <script>
+        const socket = new WebSocket('ws://localhost:8000/weather/live/');
+
+        socket.onmessage = function(event) {
+            const weatherData = JSON.parse(event.data);
+            displayWeather(weatherData);
+        };
+
+        socket.onclose = function(event) {
+            console.log('WebSocket connection closed');
+        };
+
+        function getWeather() {
+            const cityInput = document.getElementById('cityInput').value;
+            const citiesArray = cityInput.split(',').map(city => city.trim());
+            socket.send(JSON.stringify(citiesArray));
+
+            document.getElementById('cityInput').value = '';
+        }
+
+        function displayWeather(weatherData) {
+            const resultsTextArea = document.getElementById('weatherResults');
+            resultsTextArea.value = '';
+            for (const city in weatherData) {
+                if (weatherData.hasOwnProperty(city)) {
+                    const data = weatherData[city];
+                    resultsTextArea.value += `City: ${city}\n`;
+                    resultsTextArea.value += `Coordinates: ${data.Coordinates.lat}, ${data.Coordinates.lon}\n`;
+                    resultsTextArea.value += `Temperature: ${data.Temp} °C\n`;
+                    resultsTextArea.value += `Last Updated: ${new Date().toLocaleString()}\n`; // Add last updated timestamp
+                    resultsTextArea.value += '-----------------------------\n';
+                }
+            }
+        }
+
+        document.getElementById('cityInput').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                getWeather();
+            }
+        });
+    </script>
+</body>
+</html>
