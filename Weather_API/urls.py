@@ -16,11 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from weather.views import swagger, Index
+from weather.views import swagger, test, live_radar
 
 urlpatterns = [
-    path('weather/test_websocket/', Index.as_view()),
     path('admin/', admin.site.urls),
     path('doc/', swagger, name='swagger'),
+    path('weather/test_websocket/', test),
+    path('weather/live-radar/', live_radar),
     path('weather/', include('weather.urls')),
 ]
